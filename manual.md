@@ -52,7 +52,7 @@ sudo iptables -A FORWARD -o bri0 -j ACCEPT
 
 If you want to ping to addresses outside your machine, you will need to enable MASQUERADE on NAT table:
 ```
-sudo iptables -t nat -A POSTROUTING --source 172.20.0.0/16 -j MASQUER
+sudo iptables -t nat -A POSTROUTING --source 172.20.0.0/16 -j MASQUERADE
 ```
 
 You should be able to ping to internet from inside the container now.
