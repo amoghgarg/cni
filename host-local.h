@@ -4,9 +4,17 @@
 #include <unordered_map>
 #include <fstream>
 #include <functional>
-
 using std::string;
 using nlohmann::json;
+
+#ifndef UTIL_I
+#define UTIL_I
+#include "util.h"
+#endif
+
+const char* FILE_NAME = "/tmp/cni_host/ip";
+const char* MKDIR_COMMAND = "mkdir -p /tmp/cni_host";
+const char* TOUCH_FILE = "touch /tmp/cni_host/ip";
 
 /* Returns the maximum IP found in the file
 in long long form.
@@ -23,12 +31,12 @@ long long getMaxIP(std::fstream& inFile) {
   return max;
 }
 
-void del_hostlocal(string cni_containerid, json * j){
+void del_hostlocal(const string cni_containerid, const json &j){
   std::fstream fs;
   string ip;
   string id;
 
-  fs.open ("test.txt", std::fstream::in | std::fstream::out);
+  fs.open (FILE_NAME, std::fstream::in | std::fstream::out);
   std::vector<string> toWrite;
   while (fs >> ip >> id){
     if (id.compare(cni_containerid)) {
@@ -36,7 +44,7 @@ void del_hostlocal(string cni_containerid, json * j){
     }
   }
   fs.close();
-  fs.open("test.txt", std::fstream::out | std::fstream::trunc );
+  fs.open(FILE_NAME, std::fstream::out | std::fstream::trunc );
   for (std::vector<string>::iterator it = toWrite.begin(); it != toWrite.end(); it++){
     fs << *it << std::endl;
   }
@@ -44,19 +52,21 @@ void del_hostlocal(string cni_containerid, json * j){
 }
 
 
-string add_hostlocal(string cni_containerID, json * j){
+json add_hostlocal(const string cni_containerID, const json &j){
   // Parse the subnet mask from the request
-  std::unordered_map<std::string, json> ipam = j->at("ipam").get<std::unordered_map<std::string, json>>();
+  std::unordered_map<std::string, json> ipam = j.at("ipam").get<std::unordered_map<std::string, json>>();
   string x = ipam.at("subnet");
   string gateway("");
   SUBNET subnet = SUBNET(x);
 
   // Get the next valid IP from the file
   std::fstream fs;
-  fs.open ("test.txt", std::fstream::in | std::fstream::out);
+  run(MKDIR_COMMAND);
+  run(TOUCH_FILE);
+  fs.open (FILE_NAME, std::fstream::in | std::fstream::out );
   long long maxIP = getMaxIP(fs);
   if (maxIP == -1LL) {
-    maxIP = subnet.getFirstValid();
+    maxIP = subnet.getGatewayAddress();
   }
   IP candidate = IP(maxIP+1LL);
   if (subnet.ipBelongs(candidate) & subnet.notResevered(candidate)) {
@@ -66,6 +76,7 @@ string add_hostlocal(string cni_containerID, json * j){
     fs << add << std::endl;
     // Write json to stdout
     json result = {
+      {"address_internal", candidate.add_string},
       {"cniVersion", "0.3.1"},
       {"ips:", {
         {
@@ -81,7 +92,8 @@ string add_hostlocal(string cni_containerID, json * j){
       }},
       {"dns",json::object()}
     };
-    return candidate.add_string;
+    // return candidate.add_string;
+    return result;
   } else {
     fs.close();
     throw std::logic_error( "Not enough IPs remaining." );

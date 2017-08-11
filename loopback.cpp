@@ -2,7 +2,10 @@
 #include <cstdlib>
 #include <string>
 #include <cstdio>
+#ifndef UTIL_I
+#define UTIL_I
 #include "util.h"
+#endif
 
 using std::string;
 

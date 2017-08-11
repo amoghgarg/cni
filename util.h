@@ -7,11 +7,13 @@ string getEnv(const char* var) {
   return val == NULL ? string() : string(val);
 }
 
-int run(char * command) {
-  return std::system(command);
+int run(const char * command) {
+  string c = command;
+  c = c + " > null";
+  return std::system(c.c_str());
 }
 
-string containerPid(string netns){
+string containerPid(const string &netns){
   /*
   The netns is in the form `/proc/{pid}/ns/net`
   The characters between the second and third

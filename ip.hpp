@@ -22,7 +22,7 @@ struct IP {
   }
 
   private:
-  string get_string(long long add){
+  string get_string(const long long add){
     long long A = add >> 24;  // A
     long long temp = add - (A << 24);  // A.B.C.D - A.0.0.0 = B.C.D
     long long B = temp >> 16;
@@ -35,7 +35,7 @@ struct IP {
   }
 
   private:
-  long long parse(string add) {
+  long long parse(const string &add) {
 
     int a = add.find(".");
     int b = add.find(".", a+1);
@@ -44,11 +44,6 @@ struct IP {
     long long B = stoll(add.substr(a+1, b-a-1)) << 16;
     long long C = stoll(add.substr(b+1, c-b-1)) << 8;
     long long D = stoll(add.substr(c+1, add.size()-c-1));
-
-    // std::cout << "A: " << A << std::endl;
-    // std::cout << "B: " << B << std::endl;
-    // std::cout << "C: " << C << std::endl;
-    // std::cout << "D: " << D << std::endl;
 
     long long ret = A+B+C+D;
     return ret;
@@ -66,7 +61,7 @@ struct SUBNET {
     std::size_t s = subnet.find("/");
     ip = IP(subnet.substr(0, s));
     mask = stoi(subnet.substr(s+1, subnet.size() - s - 1 ));
-    subnet = subnet;
+    this->subnet = subnet;
   }
 
   bool ipBelongs(IP inip) {
@@ -82,13 +77,16 @@ struct SUBNET {
     return firstIP != inip.add_long && lastIP != inip.add_long;
   }
 
-  long long getFirstValid() {
-    // std::cout << "************************\n";
-    // std::cout << ip.add_long << std::endl;
+  // Returns the first IP of the subnet. Ends with something like 0.0
+  long long getFirstValid() const {
     long long firstIP = (ip.add_long >> (32 - mask) ) << (32-mask);
-    // std::cout << "First Valid is: " << firstIP << std::endl;
-    // std::cout << "************************";
     return firstIP;
+  }
+
+  // Returns the gateway address.
+  long long getGatewayAddress() const {
+    long long first = getFirstValid();
+    return first + 1LL;
   }
 
 

@@ -4,7 +4,11 @@
 #include <fstream>
 #include <functional>
 #include "host-local.h"
+#ifndef UTIL_I
+#define UTIL_I
 #include "util.h"
+#endif
+
 
 using std::string;
 using nlohmann::json;
@@ -33,9 +37,9 @@ int main() {
       };
       std::cout << result.dump(2) << std::endl;
     } else if (!cni_command.compare("ADD")) {
-      add_hostlocal(cni_containerid, &j);
+      add_hostlocal(cni_containerid, j);
     } else if (!cni_command.compare("DEL")) {
-      del_hostlocal(cni_containerid, &j);
+      del_hostlocal(cni_containerid, j);
     } else {
       throw std::invalid_argument("Env variable CNI_VERSION should be set from: VERSION, ADD, DEL.");
     }
